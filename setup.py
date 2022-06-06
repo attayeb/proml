@@ -5,6 +5,7 @@ setup(name='Proml',
       description='ProML',
       author='Attayeb Mohsen',
       author_email='',
+      package_dir = {"" : str("src")},
       url='',
-      packages=['proml', 'proml.functions'],
+      packages=['proml'],
      )
