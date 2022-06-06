@@ -1,4 +1,5 @@
 from distutils.core import setup
+import setuptools
 
 setup(name='Proml',
       version='0.0.1',
@@ -6,5 +7,6 @@ setup(name='Proml',
       author='Attayeb Mohsen',
       author_email='',
       package_dir = {"" : str("src")},
-      url=''
+      url='',
+      packages=setuptools.find_packages(where="src")
      )
