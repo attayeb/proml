@@ -1,4 +1,4 @@
-import proml
+from proml import Proml
 
 _hard_dependencies = ("pandas", "sklearn", "numpy", "upsetplot")
 _missing_dependencies = []
