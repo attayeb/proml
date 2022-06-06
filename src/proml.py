@@ -1,46 +1,35 @@
+"""
+"""
+import copy
+import shap
 import pandas as pd
 
-import pandas as pd
-import os
-import seaborn as sns
 
-from os.path import join
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import (matthews_corrcoef, 
                              balanced_accuracy_score, 
                              accuracy_score, 
                              make_scorer, 
                              classification_report)
-from sklearn.model_selection import cross_val_score, cross_validate, KFold, train_test_split
-
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import KFold
 import numpy as np
-import xgboost
-import shap
-from sklearn.preprocessing import MinMaxScaler, QuantileTransformer
-scale=MinMaxScaler()
-from sklearn.metrics import f1_score, precision_score, recall_score, classification_report
 
-import copy
 
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from textwrap import wrap
-from upsetplot import from_contents, from_memberships
+from sklearn.metrics import f1_score, precision_score, recall_score
+
+from upsetplot import from_memberships
 
 from upsetplot import UpSet
 import matplotlib.pyplot as plt
-from upsetplot import from_contents, from_memberships
 
 def scale_df(df, scaler):
+    """"""
     ret = pd.DataFrame(scaler.fit_transform(df))
     ret.index = df.index
     ret.columns = df.columns
     return ret
 
 
-class two_steps_cv:
+class TwoStepsCv:
     def __init__(self, classifier, X, y, sample=1000):
         self.model = copy.deepcopy(classifier)
         self.X = X
@@ -56,7 +45,7 @@ class two_steps_cv:
         self.score1 = self.cv()
         self.shap(sample=self.sample)
         self.score2 = self.cv2(self.feature_imporatance[:5])
-        
+        self.cv_sf_effect = None
         
         
     def _fit(self):
@@ -75,7 +64,7 @@ class two_steps_cv:
                                    self.X.sample(sample))
         self.shap_values = explainer(self.X.sample(sample))
         
-        feature_names = X.columns
+        feature_names = self.X.columns
         vals = np.abs(self.shap_values.values).mean(0)
         feature_importance = pd.DataFrame(list(zip(feature_names, vals)),
                                   columns=['col_name','feature_importance_vals'])
@@ -154,11 +143,11 @@ class Proml():
         self.sample=sample
     
     def add(self, classifier, title):
-        _ret = two_steps_cv(classifier, self.X, self.Y, sample=self.sample)
+        _ret = TwoStepsCv(classifier, self.X, self.Y, sample=self.sample)
         _ret.cv_selectedfeatures_effect()
         self.components.append({"title":title, "model":_ret})
 
-    def plot(self, number_of_features=5, threshold=0):
+    def plot(self, number_of_features=5, threshold=0, Q={}):
         
         for component in self.components:
             model=component['model']
@@ -201,6 +190,5 @@ class Proml():
 
         u.plot(fig)
         fig.axes[2].remove()
-        fig
-        return(to_plot)
+        return fig
         
