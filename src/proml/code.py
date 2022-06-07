@@ -87,7 +87,7 @@ class TwoStepsCv:
             model.fit(X_, y_)
             yp = model.predict(Xv)
             score.append({
-                "mmc": matthews_corrcoef(yp, yv),
+                "mcc": matthews_corrcoef(yp, yv),
                 "accuracy": accuracy_score(yp, yv),
                 "f1score": f1_score(yp, yv),
                 "balanced_accuracy": balanced_accuracy_score(yp, yv),
@@ -112,7 +112,7 @@ class TwoStepsCv:
             model.fit(X_, y_)
             yp = model.predict(Xv)
             score.append({
-                "mmc": matthews_corrcoef(yp, yv),
+                "mcc": matthews_corrcoef(yp, yv),
                 "accuracy": accuracy_score(yp, yv),
                 "f1score": f1_score(yp, yv),
                 "balanced_accuracy": balanced_accuracy_score(yp, yv),
@@ -129,7 +129,7 @@ class TwoStepsCv:
             res.extend({"id": id_,
                          "number of features":f, 
                          "features": "|".join(self.feature_imporatance[:f]), 
-                         "mmc":x['mmc'], "acc": x['accuracy'], 
+                         "mcc":x['mcc'], "acc": x['accuracy'], 
                          "precision":x['precision'], "recall":x['recall'], 
                          "f1score":x['f1score'], "balanced_accuracy":x['balanced_accuracy']} for id_, x in enumerate(self.cv2(self.feature_imporatance[:f])))
         self.cv_sf_effect = res
@@ -147,7 +147,7 @@ class Proml():
         _ret.cv_selectedfeatures_effect()
         self.components.append({"title":title, "model":_ret})
 
-    def plot(self, number_of_features=5, threshold=0, Q={}):
+    def plot(self, number_of_features=5, threshold=0, Q={}, colors = [], metric="mcc"):
         
         for component in self.components:
             model=component['model']
@@ -167,20 +167,23 @@ class Proml():
         mdf = __df.groupby("features").mean().reset_index()
         
         mdf = mdf[mdf['number of features'] < number_of_features]
-        mdf = mdf[mdf['mmc'] > threshold]
+        mdf = mdf[mdf[metric] > threshold]
         _df_ = from_memberships(mdf.features.apply(lambda x: [Q.get(i, i) for i in x.split("|")]), mdf)
         
         #_df_ = _df_.reorder_levels([22, 19, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
         #                       11, 12, 13, 14, 15, 16, 17, 18, 20, 21], axis=0)
         
-        to_plot = _df_[_df_['number of features'] < number_of_features].sort_values("mmc")
+        to_plot = _df_[_df_['number of features'] < number_of_features].sort_values(metric)
         u = UpSet(to_plot, intersection_plot_elements=0, sort_by=None,
                   totals_plot_elements=1, element_size=22, 
                   sort_categories_by=None)
-        u.add_catplot(value="mmc", kind="strip", elements=8, s=10)
+        u.add_catplot(value=metric, kind="strip", elements=8, s=10)
 
         fig = plt.figure()
-        colors = iter(['red', 'blue', 'green', 'brown', 'black', 'magenta'])
+        if colors == []:
+            colors = iter(['red', 'blue', 'green', 'brown', 'black', 'magenta'])
+        else:
+            colors = iter(colors)
         for component in self.components:
             try:
                 u.style_subsets(present=["."+component['title']], facecolor=next(colors), label=component['title'])
